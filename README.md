@@ -25,6 +25,8 @@ can't be copied, it will turn red.
 
 Then you can enter another competitor's number, click "Browse" etc.
 
+![Screenshot](http://competition.smfotografi.se/ftp/fotomaraton.png)
+
 This program is (C) Kjell Post kjell@irstafoto.se
 
 Use it, abuse it, but don't pretend you wrote it.
