@@ -2,7 +2,7 @@
 This program handles the importing of files for a Swedish Photo Marathon where
 competitors submits a memory card containing 4 or 8 JPEG images.
 
-First click "Setup" to locate the folder containing the "Tema" sub folders
+First click "Setup" to locate the folder containing the "Tema" sub folders.
 Normally there are 8 Tema-folders and they have to contain the word "Tema".
 
 Once you're setup you can start processing competitors:
