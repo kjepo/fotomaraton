@@ -1,5 +1,5 @@
 # fotomaraton
-This program handles the importing of files for a Photo Marathon where
+This program handles the importing of files for a Swedish Photo Marathon where
 competitors submits a memory card containing 4 or 8 JPEG images.
 
 First click "Setup" to locate the folder containing the "Tema" sub folders
@@ -26,10 +26,17 @@ can't be copied, it will turn red.
 Then you can enter another competitor's number, click "Browse" etc.
 
 This program is (C) Kjell Post kjell@irstafoto.se
+
 Use it, abuse it, but don't pretend you wrote it.
+
+# Standalone distributions
+
+Mac M-processors: [http://competition.smfotografi.se/ftp/maraton-silicon.zip]
+
+Mac Intel processors: [http://competition.smfotografi.se/ftp/maraton-intel.zip]
 
 # Note on using pyinstaller
 
 ``
-pyinstaller --windowed --onefile maraton4.py
+pyinstaller --windowed --onefile maraton.py
 ``
