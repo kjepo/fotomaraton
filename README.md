@@ -31,9 +31,9 @@ Use it, abuse it, but don't pretend you wrote it.
 
 # Standalone distributions
 
-Mac M-processors: [http://competition.smfotografi.se/ftp/maraton-silicon.zip]
+Mac M-processors: http://competition.smfotografi.se/ftp/maraton-silicon.zip
 
-Mac Intel processors: [http://competition.smfotografi.se/ftp/maraton-intel.zip]
+Mac Intel processors: http://competition.smfotografi.se/ftp/maraton-intel.zip
 
 # Note on using pyinstaller
 
