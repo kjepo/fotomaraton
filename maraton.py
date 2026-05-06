@@ -75,6 +75,7 @@ def setup():
                 target_subdirs.append(f.name)
     target_subdirs.sort()
     label_info.config(text="\n".join(target_subdirs))
+    start.focus_set()
 
 def ingest():
     global default_dir, start
