@@ -35,7 +35,6 @@
 
 from tkinter import *
 import os, re, shutil
-from tkinter import *
 from tkinter import filedialog as fd
 from tkinter import simpledialog
 from tkinter import messagebox
@@ -81,12 +80,14 @@ def ingest():
     global default_dir, start
     global copy_theme, copy_theme_states, theme_destinations
     global copy_user, copy_user_states, user_destinations
+    if 'jpegs' not in globals() or not jpegs:
+        return
     snr = getStartNumber(start)
     i = 0
     copy_errors = False
     for jpeg in jpegs:
         if copy_theme_states[i].get():
-            source = default_dir + "/" + jpeg
+            source = str(jpeg)
             dest = target_dir + "/" + theme_destinations[i]
             if Path(dest).is_file():
                 print(f"file {dest} already exists")
@@ -94,7 +95,7 @@ def ingest():
                 try:
                     shutil.copy(source, dest)
                     copy_theme[i]["fg"] = "green"
-                    copy_user[i].config(text=f"{jpeg} ⇒ {theme_destinations[i]} ✔")
+                    copy_theme[i].config(text=f"{jpeg.name} ⇒ {theme_destinations[i]} ✔")
                 except EnvironmentError:
                     copy_errors = True
                     copy_theme[i]["fg"] = "red"                    
@@ -103,7 +104,7 @@ def ingest():
     i = 0
     for jpeg in jpegs:
         if copy_user_states[i].get():
-            source = default_dir + "/" + jpeg
+            source = str(jpeg)
             dest = target_dir + "/" + user_destinations[i]
             if Path(dest).is_file():
                 print(f"file {dest} already exists")
@@ -111,7 +112,7 @@ def ingest():
                 try:
                     shutil.copy(source, dest)
                     copy_user[i]["fg"] = "green"
-                    copy_user[i].config(text=f"{jpeg} ⇒ {user_destinations[i]} ✔")
+                    copy_user[i].config(text=f"{jpeg.name} ⇒ {user_destinations[i]} ✔")
                 except EnvironmentError:
                     copy_user[i]["fg"] = "red"
                     copy_errors = True
@@ -149,50 +150,81 @@ def on_enter(event):
 
 def browse():
     global jpegs, button_import, default_dir, root, copy_theme, copy_user, copy_theme_states, copy_user_states
-    global theme_destinations, user_destinations
+    global theme_destinations, user_destinations, warning_label
     snr = setuser()
     if not snr:
+        startinfo.config(text="Enter competitor number first")
         return
     default_dir = fd.askdirectory(initialdir = default_dir)
     if not default_dir:
         return
     jpegs = []
-    for path in Path(default_dir).rglob("*.[jpeg jpg JPEG JPG]*"):
-        default_dir = str(path.parent)
-        jpegs.append(path.name)
+    for path in Path(default_dir).rglob("*"):
+        if path.suffix.lower() in (".jpg", ".jpeg"):
+            jpegs.append(path)
     jpegs.sort()
     print("default_dir")
     print(default_dir)
 
     for i in copy_theme:
         copy_theme[i].destroy()
+    for i in copy_user:
+        copy_user[i].destroy()
     copy_theme = {}
-    
+    copy_user = {}
+
     if len(target_subdirs) > 0:
+        # Prefer mapping to unfilled tema slots so a second batch of 4 images lands
+        # in the next 4 empty slots rather than re-mapping to the already-filled first 4.
+        # Fall back to all slots when there aren't enough empty ones (e.g. re-browsing
+        # after a complete import), in which case destinations are shown pre-unchecked.
+        available_subdirs = [
+            subdir for subdir in target_subdirs
+            if not Path(f"{target_dir}/{subdir}/Nr {snr} - {subdir}.jpg").is_file()
+        ]
+        subdirs_to_use = available_subdirs if len(available_subdirs) >= len(jpegs) else target_subdirs
+
         i = 0
         for jpg in jpegs:
-            # theme = "Nr " + snr + " - " + target_subdirs[i]
+            if i >= len(subdirs_to_use):
+                break
+            subdir = subdirs_to_use[i]
+
             copy_theme_states[i] = IntVar()
-            theme_destinations[i] = f"{target_subdirs[i]}/Nr {snr} - {target_subdirs[i]}.jpg"
-            copy_theme[i] = Checkbutton(root, text=f"{jpg} ⇒ {theme_destinations[i]}", variable=copy_theme_states[i])
+            theme_destinations[i] = f"{subdir}/Nr {snr} - {subdir}.jpg"
+            copy_theme[i] = Checkbutton(root, text=f"{jpg.name} ⇒ {theme_destinations[i]}", variable=copy_theme_states[i])
             copy_theme[i].grid(row=2+2*i, column=1, padx=5, pady=0, columnspan=2, sticky=W)
 
-            if not Path(target_dir + "/" + theme_destinations[i]).is_file():
+            theme_exists = Path(target_dir + "/" + theme_destinations[i]).is_file()
+            theme_label = f"{jpg.name} ⇒ {theme_destinations[i]}" + (" (exists)" if theme_exists else "")
+            copy_theme[i].config(text=theme_label)
+            if not theme_exists:
                 copy_theme[i].select()
             else:
                 copy_theme[i].deselect()
 
             copy_user_states[i] = IntVar()
-            user_destinations[i] = f"Nr {snr}/Nr {snr} - {target_subdirs[i]}.jpg"
-            copy_user[i] = Checkbutton(root, text=f"{jpg} ⇒ {user_destinations[i]}", variable=copy_user_states[i])
+            user_destinations[i] = f"Nr {snr}/Nr {snr} - {subdir}.jpg"
+            user_exists = Path(target_dir + "/" + user_destinations[i]).is_file()
+            user_label = f"{jpg.name} ⇒ {user_destinations[i]}" + (" (exists)" if user_exists else "")
+            copy_user[i] = Checkbutton(root, text=user_label, variable=copy_user_states[i])
             copy_user[i].grid(row=3+2*i, column=1, padx=5, pady=0, columnspan=2, sticky=W)
 
-            if not Path(target_dir + "/" + user_destinations[i]).is_file():
+            if not user_exists:
                 copy_user[i].select()
             else:
                 copy_user[i].deselect()
-                
+
             i = i + 1
+
+        existing_count = sum(
+            1 for dest in theme_destinations.values()
+            if Path(target_dir + "/" + dest).is_file()
+        )
+        if existing_count:
+            warning_label.config(text=f"Warning: {existing_count} file(s) already exist and will not be overwritten")
+        else:
+            warning_label.config(text="")
 
         startinfo.config(text="")
         #start.delete(0, 'end')
@@ -214,5 +246,7 @@ start.grid(row=1, column=1, padx=5, pady=5, sticky="W")
 Button(root, text='Import', height=2, width=5, command=ingest).grid(row=8, column=0, rowspan=3, padx=5, pady=5)
 label_info = Label(root, width=60, height=10, wraplength=520, justify=LEFT, anchor="nw", bg="#DDDDDD")
 label_info.grid(row=0, column=1, columnspan=2, padx=5, pady=5)
+warning_label = Label(root, text="", fg="orange", anchor="w")
+warning_label.grid(row=20, column=1, columnspan=2, padx=5, pady=2, sticky=W)
 
 root.mainloop()
